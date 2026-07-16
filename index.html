@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Autonomous Web Research Agent</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --panel-bg: rgba(30, 41, 59, 0.7);
+            --text-color: #f8fafc;
+            --accent-color: #3b82f6;
+            --accent-hover: #2563eb;
+            --border-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+        }
+
+        h1 {
+            font-weight: 700;
+            font-size: 2.5rem;
+            margin-bottom: 1.5rem;
+            background: -webkit-linear-gradient(45deg, #60a5fa, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background: var(--panel-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            transition: transform 0.3s ease;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: rgba(15, 23, 42, 0.5);
+            color: white;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+        }
+
+        button {
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            border: none;
+            background: var(--accent-color);
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.1s;
+        }
+
+        button:hover {
+            background: var(--accent-hover);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        button:disabled {
+            background: #475569;
+            cursor: not-allowed;
+        }
+
+        .log-container {
+            margin-bottom: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            max-height: 250px;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+
+        .log-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .log-container::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.2);
+            border-radius: 4px;
+        }
+
+        .log-item {
+            padding: 1rem;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.03);
+            border-left: 4px solid var(--accent-color);
+            font-size: 0.9rem;
+            animation: fadeIn 0.4s ease-out forwards;
+            opacity: 0;
+            transform: translateY(10px);
+            word-wrap: break-word;
+        }
+        
+        .log-item.tool {
+            border-left-color: #a855f7;
+        }
+        
+        .log-item.error {
+            border-left-color: #ef4444;
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        #result {
+            margin-top: 2rem;
+            padding: 2rem;
+            background: rgba(15, 23, 42, 0.5);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            display: none;
+            line-height: 1.6;
+        }
+        
+        #result h1, #result h2, #result h3 {
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            color: #e2e8f0;
+            background: none;
+            -webkit-text-fill-color: initial;
+        }
+        
+        #result a {
+            color: #60a5fa;
+            text-decoration: none;
+        }
+        
+        #result a:hover {
+            text-decoration: underline;
+        }
+        
+        #result p {
+            margin-bottom: 1rem;
+        }
+        
+        #result ul, #result ol {
+            margin-bottom: 1rem;
+            padding-left: 2rem;
+        }
+        
+        /* Spinner */
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            display: none;
+            vertical-align: middle;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <h1>Web Research Agent</h1>
+    
+    <div class="container">
+        <form id="researchForm" class="input-group">
+            <input type="text" id="topic" placeholder="E.g., What are the latest solid state battery breakthroughs?" required>
+            <button type="submit" id="submitBtn">
+                Research <div class="spinner" id="spinner"></div>
+            </button>
+        </form>
+
+        <div class="log-container" id="logs"></div>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        const form = document.getElementById('researchForm');
+        const topicInput = document.getElementById('topic');
+        const submitBtn = document.getElementById('submitBtn');
+        const spinner = document.getElementById('spinner');
+        const logsDiv = document.getElementById('logs');
+        const resultDiv = document.getElementById('result');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const topic = topicInput.value.trim();
+            if (!topic) return;
+
+            // Reset UI
+            logsDiv.innerHTML = '';
+            resultDiv.style.display = 'none';
+            resultDiv.innerHTML = '';
+            submitBtn.disabled = true;
+            spinner.style.display = 'inline-block';
+            
+            const evtSource = new EventSource(`/api/research?topic=${encodeURIComponent(topic)}`);
+            
+            evtSource.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                
+                if (data.type === 'status') {
+                    addLog(data.message);
+                } else if (data.type === 'tool_call') {
+                    addLog(`Using tool: ${data.name} - ${JSON.stringify(data.args)}`, 'tool');
+                } else if (data.type === 'final_report') {
+                    resultDiv.innerHTML = marked.parse(data.report);
+                    resultDiv.style.display = 'block';
+                    evtSource.close();
+                    resetBtn();
+                } else if (data.type === 'error') {
+                    addLog(`Error: ${data.message}`, 'error');
+                    evtSource.close();
+                    resetBtn();
+                }
+            };
+            
+            evtSource.onerror = function() {
+                addLog("Connection to server lost.", 'error');
+                evtSource.close();
+                resetBtn();
+            };
+        });
+
+        function addLog(msg, type = 'status') {
+            const div = document.createElement('div');
+            div.className = `log-item ${type}`;
+            div.textContent = msg;
+            logsDiv.appendChild(div);
+            // Auto scroll to bottom
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+        }
+        
+        function resetBtn() {
+            submitBtn.disabled = false;
+            spinner.style.display = 'none';
+        }
+    </script>
+</body>
+</html>

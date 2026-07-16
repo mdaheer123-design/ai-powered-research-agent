@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Research Assistant</title>
+    
+    <!-- Fonts: Inter for UI, Lora for the report reading experience -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Lora', 'serif'],
+                    },
+                    colors: {
+                        // Ultra-minimalist dark mode palette (Vercel/Linear inspired)
+                        bg: '#000000',
+                        panel: '#0A0A0A',
+                        border: '#222',
+                        accent: '#EDEDED',
+                        muted: '#888888',
+                        brand: '#3B82F6', // Subtle blue for links/accents
+                    },
+                    animation: {
+                        'slide-up': 'slideUp 0.4s ease-out forwards',
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    },
+                    keyframes: {
+                        slideUp: {
+                            '0%': { opacity: '0', transform: 'translateY(8px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js" crossorigin="anonymous"></script>
+    <script>
+        Babel.registerPreset('react-classic', {
+            presets: [
+                [Babel.availablePresets['react'], { runtime: 'classic' }]
+            ]
+        });
+    </script>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest" crossorigin="anonymous"></script>
+
+    <style>
+        body {
+            background-color: #000;
+            color: #EDEDED;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Subtle grid background to look like a designer's canvas */
+        .bg-grid {
+            background-image: linear-gradient(to right, #111 1px, transparent 1px),
+                              linear-gradient(to bottom, #111 1px, transparent 1px);
+            background-size: 40px 40px;
+            mask-image: radial-gradient(circle at center, black, transparent 80%);
+            -webkit-mask-image: radial-gradient(circle at center, black, transparent 80%);
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            opacity: 0.5;
+        }
+
+        /* Clean scrollbar */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
+
+        /* Typography reading tweaks */
+        .prose p { margin-bottom: 1.5em; line-height: 1.7; color: #A1A1AA; }
+        .prose h2, .prose h3 { color: #EDEDED; margin-top: 2em; margin-bottom: 0.75em; }
+        .prose h2 { font-size: 1.5rem; font-weight: 600; letter-spacing: -0.02em; }
+        .prose h3 { font-size: 1.125rem; font-weight: 500; }
+        
+        .tooltip-content {
+            display: none;
+            position: absolute;
+            bottom: calc(100% + 5px);
+            left: 50%;
+            transform: translateX(-50%);
+            width: max-content;
+            max-width: 280px;
+            z-index: 50;
+        }
+        
+        .citation:hover .tooltip-content {
+            display: block;
+            animation: slideUp 0.15s ease-out forwards;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-grid"></div>
+    <div id="root"></div>
+
+    <script type="text/babel" data-presets="react-classic">
+        const { useState, useEffect, useRef } = React;
+
+        const Icon = ({ name, size = 18, className = '' }) => {
+            const iconRef = useRef(null);
+            useEffect(() => {
+                if (iconRef.current && window.lucide) {
+                    try {
+                        iconRef.current.innerHTML = '';
+                        const el = document.createElement('i');
+                        el.setAttribute('data-lucide', name);
+                        iconRef.current.appendChild(el);
+                        window.lucide.createIcons({
+                            root: iconRef.current,
+                            attrs: { width: size, height: size, 'class': className, 'stroke-width': 1.5 }
+                        });
+                    } catch (e) { console.error(e); }
+                }
+            }, [name, size, className]);
+            return <span ref={iconRef} className="inline-flex items-center justify-center"></span>;
+        };
+
+        const MOCK_SUGGESTIONS = [
+            "Current state of SMRs in 2026",
+            "How does quantum tech affect logistics?",
+            "Geothermal vs offshore wind economics"
+        ];
+
+        const generateMockData = (query) => {
+            const topic = query.trim() || "the requested topic";
+            return {
+                logs: [
+                    { type: 'think', text: `Hmm, let me look into the latest information on "${topic}".` },
+                    { type: 'search', text: `Searching DuckDuckGo for '${topic}'...` },
+                    { type: 'read', text: `Reading recent articles and reports related to ${topic}...` },
+                    { type: 'think', text: `I should dig deeper into the key players and recent developments.` },
+                    { type: 'search', text: `Searching 'latest developments and companies in ${topic}'...` },
+                    { type: 'read', text: `Found some interesting data points. Synthesizing the findings.` },
+                    { type: 'think', text: `Let me verify the statistics to make sure they're accurate.` },
+                    { type: 'calc', text: `Crunching the numbers: cross-referencing 3 different data sources.` },
+                    { type: 'think', text: `Got it. Writing up a clean, comprehensive summary for you now.` }
+                ],
+                report: {
+                    title: `Research Overview: ${topic}`,
+                    p1: `The landscape for ${topic} has evolved noticeably over the past few years. Based on recent data, we are seeing a significant transition from early concepts to real-world applications and market adoption.`,
+                    h1: `Key Developments`,
+                    p2: `Right now, the most tangible progress is being driven by major industry players heavily investing in this space. While some regions are advancing rapidly with fully operational deployments, others are experiencing slight delays due to regulatory or logistical challenges.`,
+                    h2: `The Economics`,
+                    p3: `The financial argument for ${topic} is becoming clearer. Recent studies indicate that the long-term cost benefits are substantial, representing a potential efficiency gain of roughly 40-45% compared to traditional models.`,
+                    sources: [
+                        `Global Industry Report 2026: ${topic}`,
+                        `Q1 Market Analysis & Updates`,
+                        `Economic Cost Analysis v19.0`
+                    ]
+                }
+            };
+        };
+
+        const ChatInterface = () => {
+            const [query, setQuery] = useState('');
+            const [submittedQuery, setSubmittedQuery] = useState(null);
+            const [logs, setLogs] = useState([]);
+            const [isDone, setIsDone] = useState(false);
+            const logsEndRef = useRef(null);
+
+            const [currentRun, setCurrentRun] = useState(null);
+
+            const startSearch = (text) => {
+                if (!text.trim()) return;
+                setSubmittedQuery(text);
+                setQuery('');
+                setLogs([]);
+                setIsDone(false);
+                
+                const mockData = generateMockData(text);
+                setCurrentRun(mockData);
+                
+                let step = 0;
+                const runNext = () => {
+                    if (step >= mockData.logs.length) {
+                        setTimeout(() => setIsDone(true), 800);
+                        return;
+                    }
+                    const currentLog = mockData.logs[step];
+                    setLogs(prev => [...prev, currentLog]);
+                    step++;
+                    
+                    // Scroll to bottom of chat
+                    setTimeout(() => {
+                        logsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+                    }, 50);
+
+                    // Human-like staggered typing/thinking delays (between 0.8s and 2s)
+                    setTimeout(runNext, 800 + Math.random() * 1200);
+                };
+                setTimeout(runNext, 600);
+            };
+
+            return (
+                <div className="min-h-screen flex flex-col items-center max-w-3xl mx-auto px-4 py-12">
+                    
+                    {/* Header */}
+                    <div className="w-full flex items-center justify-between mb-16 animate-slide-up">
+                        <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm">
+                                <Icon name="sparkles" size={16} className="text-black" />
+                            </div>
+                            <span className="font-medium tracking-tight text-sm text-gray-200">Research Assistant</span>
+                        </div>
+                        <button 
+                            onClick={() => { setSubmittedQuery(null); setQuery(''); setLogs([]); setIsDone(false); }}
+                            className="text-xs text-muted hover:text-accent transition-colors"
+                        >
+                            Clear Chat
+                        </button>
+                    </div>
+
+                    {/* Main Chat Area */}
+                    <div className="w-full flex-1 flex flex-col gap-8 pb-32">
+                        
+                        {!submittedQuery ? (
+                            <div className="flex flex-col items-center text-center mt-20 animate-slide-up">
+                                <h1 className="text-3xl font-medium mb-3 tracking-tight">How can I help you research?</h1>
+                                <p className="text-muted text-sm mb-10">I can scour the web, read articles, and crunch numbers to give you a cited answer.</p>
+                                
+                                <div className="flex flex-wrap justify-center gap-2">
+                                    {MOCK_SUGGESTIONS.map((s, i) => (
+                                        <button 
+                                            key={i} onClick={() => setQuery(s)}
+                                            className="text-xs px-4 py-2 rounded-full border border-border bg-panel text-muted hover:text-accent hover:border-gray-600 transition-all"
+                                        >
+                                            {s}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="flex flex-col gap-8 w-full animate-slide-up">
+                                {/* User Message */}
+                                <div className="flex gap-4">
+                                    <div className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center shrink-0">
+                                        <Icon name="user" size={16} className="text-gray-400" />
+                                    </div>
+                                    <div className="pt-1 text-gray-100">{submittedQuery}</div>
+                                </div>
+
+                                {/* Agent Working Process */}
+                                <div className="flex gap-4">
+                                    <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(255,255,255,0.1)]">
+                                        <Icon name="sparkles" size={16} className="text-black" />
+                                    </div>
+                                    <div className="pt-1 flex-1 flex flex-col gap-3">
+                                        {!isDone && (
+                                            <div className="flex items-center gap-2 text-xs text-muted mb-2 font-medium">
+                                                <Icon name="loader-2" size={14} className="animate-spin" /> Working on it...
+                                            </div>
+                                        )}
+                                        
+                                        {/* Status logs */}
+                                        <div className="flex flex-col gap-2">
+                                            {logs.map((log, i) => (
+                                                <div key={i} className="flex items-start gap-2 text-sm text-gray-400 animate-slide-up" style={{animationDuration: '0.3s'}}>
+                                                    <span className="mt-0.5 text-gray-600">
+                                                        {log.type === 'think' ? '—' : 
+                                                         log.type === 'search' ? <Icon name="search" size={14}/> :
+                                                         log.type === 'calc' ? <Icon name="calculator" size={14}/> :
+                                                         <Icon name="book-open" size={14}/>}
+                                                    </span>
+                                                    <span className={log.type === 'think' ? 'italic' : ''}>{log.text}</span>
+                                                </div>
+                                            ))}
+                                            <div ref={logsEndRef} />
+                                        </div>
+
+                                        {/* Final Report */}
+                                        {isDone && (
+                                            <div className="mt-6 bg-panel border border-border rounded-xl p-6 md:p-8 animate-slide-up shadow-xl relative group">
+                                                
+                                                <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+                                                    <button className="text-muted hover:text-accent p-1"><Icon name="copy" size={16}/></button>
+                                                </div>
+
+                                                <div className="prose font-serif">
+                                                    <h2 className="!mt-0 text-white">{currentRun.report.title}</h2>
+                                                    
+                                                    <p>{currentRun.report.p1}</p>
+                                                    
+                                                    <h3 className="text-gray-200">{currentRun.report.h1}</h3>
+                                                    <p>{currentRun.report.p2}</p>
+
+                                                    <h3 className="text-gray-200">{currentRun.report.h2}</h3>
+                                                    <p>{currentRun.report.p3}</p>
+
+                                                    <hr className="my-8 border-border" />
+                                                    
+                                                    <div className="font-sans">
+                                                        <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Sources</div>
+                                                        <div className="flex flex-col gap-2">
+                                                            {currentRun.report.sources.map((src, i) => (
+                                                                <a 
+                                                                    key={i} 
+                                                                    href={`https://duckduckgo.com/?q=${encodeURIComponent(src)}`} 
+                                                                    target="_blank" 
+                                                                    rel="noopener noreferrer"
+                                                                    className="flex items-center justify-between p-2 rounded hover:bg-gray-900 transition group"
+                                                                >
+                                                                    <div className="flex items-center gap-3">
+                                                                        <span className="text-xs text-gray-500 font-mono">{i + 1}</span>
+                                                                        <span className="text-sm text-gray-300 group-hover:text-white transition">{src}</span>
+                                                                    </div>
+                                                                    <Icon name="arrow-up-right" size={14} className="text-gray-600 group-hover:text-gray-400" />
+                                                                </a>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Input Area Fixed to Bottom */}
+                    <div className="fixed bottom-0 left-0 w-full bg-gradient-to-t from-bg via-bg to-transparent pb-8 pt-20 px-4 z-10">
+                        <div className="max-w-2xl mx-auto relative">
+                            <form 
+                                onSubmit={(e) => { e.preventDefault(); startSearch(query); }}
+                                className="relative flex items-center bg-panel border border-border focus-within:border-gray-500 rounded-2xl p-1 shadow-2xl transition-colors duration-300"
+                            >
+                                <input 
+                                    type="text" 
+                                    value={query}
+                                    onChange={(e) => setQuery(e.target.value)}
+                                    placeholder="Message Research Assistant..."
+                                    className="flex-1 bg-transparent border-none outline-none px-4 py-3 text-sm text-white placeholder-gray-500"
+                                />
+                                <button 
+                                    type="submit"
+                                    disabled={!query.trim()}
+                                    className="p-2 mr-1 rounded-xl bg-white text-black hover:bg-gray-200 disabled:bg-gray-800 disabled:text-gray-500 transition-colors"
+                                >
+                                    <Icon name="arrow-up" size={18} />
+                                </button>
+                            </form>
+                            <div className="text-center mt-3 text-[10px] text-gray-600 font-medium">
+                                AI can make mistakes. Verify important information.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        class ErrorBoundary extends React.Component {
+            constructor(props) { super(props); this.state = { hasError: false, error: null }; }
+            static getDerivedStateFromError(error) { return { hasError: true, error }; }
+            render() {
+                if (this.state.hasError) {
+                    return <div className="p-8 text-red-400 font-mono text-sm">Error: {this.state.error.toString()}</div>;
+                }
+                return this.props.children; 
+            }
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<ErrorBoundary><ChatInterface /></ErrorBoundary>);
+    </script>
+</body>
+</html>
