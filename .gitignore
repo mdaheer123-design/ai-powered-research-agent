@@ -4,6 +4,6 @@ __pycache__/
 .env
 .vscode/
 .idea/
+.agents/
 report.md
-test_browser.py
 venv/

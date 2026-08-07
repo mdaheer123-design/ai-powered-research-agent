@@ -1,6 +1,6 @@
 <div align="center">
 
-# ResearchAgent
+# 🔬 ResearchAgent
 
 **An autonomous AI agent that plans, searches, verifies, and writes cited research reports — end to end, no human in the loop.**
 
@@ -11,7 +11,7 @@ Powered by **Groq** (Llama 3.3 70B) with automatic fallback to **Gemini** — bo
 [![Groq](https://img.shields.io/badge/LLM-Groq%20%2F%20Llama%203.3-orange.svg)](https://console.groq.com)
 [![Gemini](https://img.shields.io/badge/Fallback-Gemini%202.0%20Flash-4285F4.svg)](https://aistudio.google.com)
 
-[Features](#features) • [How It Works](#how-it-works) • [Quick Start](#quick-start) • [Architecture](#architecture) • [Roadmap](#roadmap)
+[Features](#features) • [How It Works](#how-it-works) • [Quick Start](#quick-start) • [Architecture](#architecture)
 
 </div>
 
@@ -25,19 +25,15 @@ Most "AI agent" demos are a single prompt-response with a search tool bolted on.
 
 Give it a question. It comes back with a verified, source-linked Markdown report — flagging anything it could not confirm instead of guessing.
 
-```bash
-python agent.py "What are the leading approaches to small modular nuclear reactors in 2026, and who are the key companies?"
-```
-
 ## Features
 
 - **Genuine agentic loop** — Plan → Act → Observe → Reflect, not a single-shot RAG call.
-- **Dual-LLM resilience** — Groq primary, Gemini automatic fallback on error/rate-limit, zero paid API keys.
-- **Real tool orchestration** — native function/tool calling (not prompt-hacked), with `web_search`, `fetch_page`, and `calculator`.
-- **Fact verification** — cross-checks claims across multiple sources and explicitly flags conflicts or unresolved points instead of hallucinating a confident answer.
-- **Structured, cited output** — every claim traces to a source URL; final report follows a consistent Markdown schema.
-- **Configurable guardrails** — hard iteration cap, retry limits per sub-question, and graceful "here is what is incomplete" termination instead of silent partial answers.
-- **Premium UI prompt included** — a ready-to-use design brief for building a polished, animated frontend on top of the agent (see [`UI_PROMPT.md`](./UI_PROMPT.md)).
+- **Dual-LLM resilience** — Groq primary, Gemini automatic fallback on error/rate-limit, zero paid API keys required.
+- **Real tool orchestration** — `search_web`, `read_webpage`, and `calculator` with robust dual-format parsing (handles both JSON and XML tool call formats).
+- **Fact verification** — Cross-checks claims across multiple sources and explicitly flags conflicts.
+- **Structured, cited output** — Every claim traces to a source URL; final report follows a consistent Markdown schema.
+- **Live streaming UI** — Real-time Server-Sent Events (SSE) stream the agent's thought process to a polished React frontend.
+- **Portfolio-ready design** — Clean, dark-mode UI with tool activity visualization, copy-to-clipboard, and responsive layout.
 
 ## How It Works
 
@@ -45,8 +41,8 @@ python agent.py "What are the leading approaches to small modular nuclear reacto
 ┌─────────────┐     ┌──────────────────────────────────────────────┐     ┌─────────────┐
 │   User asks │ --> │            AGENT REASONING LOOP              │ --> │   Report.md │
 │  a question │     │                                              │     │  (cited,    │
-└─────────────┘     │  1. PLAN    → break into 3-6 sub-questions   │     │  verified)  │
-                    │  2. ACT     → web_search / fetch_page /      │     └─────────────┘
+└─────────────┘     │  1. PLAN    → break into sub-questions       │     │  verified)  │
+                    │  2. ACT     → search_web / read_webpage /    │     └─────────────┘
                     │               calculator                     │
                     │  3. OBSERVE → extract facts + source + date  │
                     │  4. REFLECT → resolved? conflicting? retry?  │
@@ -79,68 +75,67 @@ pip install -r requirements.txt
 
 ### 3. Set Environment Variables
 
-```bash
-export GROQ_API_KEY="gsk_..."
-export GEMINI_API_KEY="AIza..."   # optional
+Create a `.env` file in the project root:
+
+```
+GROQ_API_KEY=gsk_...
+GEMINI_API_KEY=AIza...
 ```
 
-### 4. Run the Agent
+### 4. Run
 
+**Web UI (recommended):**
 ```bash
-python agent.py "your research question here"
+python server.py
 ```
+Then open [http://localhost:8000](http://localhost:8000) in your browser.
 
-The report prints to the console and is saved to `report.md` in the working directory.
+**CLI mode:**
+```bash
+python main.py "your research question here"
+```
 
 ## Architecture
 
 ```
-research-agent/
-├── agent.py              # Core agent: LLM orchestration, tool loop, fallback logic
-├── requirements.txt      # groq, google-generativeai, ddgs, requests, beautifulsoup4
-├── SYSTEM_PROMPT.md      # Full production system prompt used by the agent
-├── UI_PROMPT.md          # Design brief for building a premium frontend on top
-├── README.md
-└── report.md             # Generated on each run (gitignored recommended)
+AI-powered-research-agent/
+├── server.py             # FastAPI server — SSE streaming endpoint
+├── agent.py              # Core agent — LLM orchestration, tool loop, dual-engine fallback
+├── tools.py              # Tool implementations — search_web, read_webpage, calculator
+├── main.py               # CLI entry point with Rich console output
+├── index.html            # React frontend — live agent activity UI
+├── requirements.txt      # Python dependencies
+├── .env                  # API keys (not committed)
+└── README.md
 ```
 
 **Key design decisions:**
-- **Fallback over single point of failure** — if Groq errors or rate-limits (common on free tiers), the agent automatically retries then falls back to Gemini rather than failing the whole task.
-- **Tool calls are native, not parsed from text** — uses OpenAI-style structured function calling on both backends (via an adapter for Gemini's function-call format), which is far more reliable than regex-parsing a "Thought/Action" text format.
-- **Explicit uncertainty over confident hallucination** — the system prompt requires the agent to label unresolved or conflicting findings rather than smoothing them over.
+- **Fallback over single point of failure** — If Groq errors or rate-limits (common on free tiers), the agent automatically falls back to Gemini rather than failing the whole task.
+- **Robust tool call parsing** — A dual-format parser handles both JSON `{"tool": ...}` and XML `<function=...>` formats, making the system resilient to LLM output variations.
+- **Explicit uncertainty over confident hallucination** — The system prompt requires the agent to label unresolved or conflicting findings rather than smoothing them over.
 
-## Configuration
+## Tech Stack
 
-Key tunables at the top of `agent.py`:
-
-| Variable | Default | Purpose |
-|---|---|---|
-| `GROQ_MODEL` | `llama-3.3-70b-versatile` | Primary reasoning model |
-| `GEMINI_MODEL` | `gemini-2.0-flash` | Fallback model |
-| `MAX_ITERATIONS` | `18` | Hard cap on reasoning/tool-call loops |
-| `MAX_SEARCH_RESULTS` | `5` | Results returned per `web_search` call |
-| `MAX_FETCH_CHARS` | `6000` | Truncation limit for fetched page text |
-| `RETRY_ATTEMPTS` | `3` | Retries on Groq before falling back to Gemini |
-
-## Roadmap
-
-- [ ] Swap DuckDuckGo for a paid search API (Serper/Tavily/Bing) as an optional higher-reliability backend.
-- [ ] Persistent cache of fetched pages (SQLite or Chroma) to avoid re-fetching across runs.
-- [ ] FastAPI wrapper for an HTTP endpoint and SSE streaming of live agent steps.
-- [ ] Frontend implementation from [`UI_PROMPT.md`](./UI_PROMPT.md) — live agent-activity visualization.
-- [ ] Structured tracing/observability (LangSmith or Helicone).
-- [ ] Per-user step and cost budgets for public deployment.
+| Component | Technology |
+|---|---|
+| Backend | Python, FastAPI, Uvicorn |
+| Primary LLM | Groq (Llama 3.3 70B Versatile) |
+| Fallback LLM | Google Gemini 2.0 Flash |
+| Web Search | DuckDuckGo (via ddgs) |
+| Web Scraping | Requests + BeautifulSoup4 |
+| Frontend | React 18, Tailwind CSS, Lucide Icons |
+| Streaming | Server-Sent Events (SSE) |
 
 ## Contributing
 
-Issues and Pull Requests are welcome. If you add a new tool, update both `TOOL_IMPLEMENTATIONS` and `TOOL_SCHEMAS` in `agent.py`, and reflect it in `SYSTEM_PROMPT.md` so the model knows when to use it.
+Issues and Pull Requests are welcome.
 
 ## License
 
-MIT — see [LICENSE](./LICENSE).
+MIT
 
 ---
 
 <div align="center">
-<sub>Built as a demonstration of agentic reasoning and tool orchestration, not just single-shot LLM calls.</sub>
+<sub>Built by <a href="https://github.com/senthamizhvelan04">Senthamizh Velan</a> — a demonstration of agentic reasoning and tool orchestration, not just single-shot LLM calls.</sub>
 </div>

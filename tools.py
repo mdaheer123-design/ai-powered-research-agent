@@ -1,5 +1,8 @@
 import json
-from duckduckgo_search import DDGS
+try:
+    from ddgs import DDGS
+except ImportError:
+    from duckduckgo_search import DDGS
 import requests
 from bs4 import BeautifulSoup
 
@@ -16,7 +19,6 @@ def search_web(query: str) -> str:
             if not results:
                 return json.dumps({"error": "No results found."})
             
-            # Format results
             formatted_results = []
             for r in results:
                 formatted_results.append({
@@ -30,7 +32,8 @@ def search_web(query: str) -> str:
 
 def read_webpage(url: str) -> str:
     """
-    Reads the content of a web page and returns the extracted text. Use this after finding a relevant URL via search_web.
+    Reads the content of a web page and returns the extracted text.
+    Use this after finding a relevant URL via search_web.
     
     Args:
         url: The URL of the web page to read.
@@ -44,13 +47,13 @@ def read_webpage(url: str) -> str:
         
         soup = BeautifulSoup(response.text, "html.parser")
         
-        # Remove script, style, header, footer, nav
+        # Remove non-content elements
         for element in soup(["script", "style", "header", "footer", "nav", "aside"]):
             element.extract()
             
         text = soup.get_text(separator="\n", strip=True)
         
-        # Truncate text to avoid token limits (e.g., first 15,000 characters)
+        # Truncate to avoid token limits
         if len(text) > 15000:
             text = text[:15000] + "\n... [Content Truncated]"
             

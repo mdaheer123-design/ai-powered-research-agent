@@ -1,289 +1,592 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Autonomous Web Research Agent</title>
+    <title>ResearchAgent — AI-Powered Research Assistant</title>
+    <meta name="description" content="An autonomous AI research agent that searches the web, reads articles, and generates cited research reports. Built with Python, FastAPI, Groq, and Gemini.">
+    <meta name="author" content="Senthamizh Velan">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔬</text></svg>">
+    
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Marked.js for Markdown -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <style>
-        :root {
-            --bg-color: #0f172a;
-            --panel-bg: rgba(30, 41, 59, 0.7);
-            --text-color: #f8fafc;
-            --accent-color: #3b82f6;
-            --accent-hover: #2563eb;
-            --border-color: rgba(255, 255, 255, 0.1);
-        }
-        
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
-            color: var(--text-color);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 2rem;
-        }
-
-        h1 {
-            font-weight: 700;
-            font-size: 2.5rem;
-            margin-bottom: 1.5rem;
-            background: -webkit-linear-gradient(45deg, #60a5fa, #c084fc);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 800px;
-            background: var(--panel-bg);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 2rem;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            transition: transform 0.3s ease;
-        }
-
-        .input-group {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-
-        input[type="text"] {
-            flex: 1;
-            padding: 1rem 1.5rem;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            background: rgba(15, 23, 42, 0.5);
-            color: white;
-            font-size: 1rem;
-            outline: none;
-            transition: border-color 0.3s, box-shadow 0.3s;
-        }
-
-        input[type="text"]:focus {
-            border-color: var(--accent-color);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
-        }
-
-        button {
-            padding: 1rem 2rem;
-            border-radius: 8px;
-            border: none;
-            background: var(--accent-color);
-            color: white;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.3s, transform 0.1s;
-        }
-
-        button:hover {
-            background: var(--accent-hover);
-        }
-
-        button:active {
-            transform: scale(0.98);
-        }
-
-        button:disabled {
-            background: #475569;
-            cursor: not-allowed;
-        }
-
-        .log-container {
-            margin-bottom: 2rem;
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-            max-height: 250px;
-            overflow-y: auto;
-            padding-right: 0.5rem;
-        }
-
-        .log-container::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .log-container::-webkit-scrollbar-thumb {
-            background: rgba(255,255,255,0.2);
-            border-radius: 4px;
-        }
-
-        .log-item {
-            padding: 1rem;
-            border-radius: 8px;
-            background: rgba(255, 255, 255, 0.03);
-            border-left: 4px solid var(--accent-color);
-            font-size: 0.9rem;
-            animation: fadeIn 0.4s ease-out forwards;
-            opacity: 0;
-            transform: translateY(10px);
-            word-wrap: break-word;
-        }
-        
-        .log-item.tool {
-            border-left-color: #a855f7;
-        }
-        
-        .log-item.error {
-            border-left-color: #ef4444;
-        }
-
-        @keyframes fadeIn {
-            to {
-                opacity: 1;
-                transform: translateY(0);
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Lora', 'serif'],
+                    },
+                    colors: {
+                        bg: '#000000',
+                        panel: '#0A0A0A',
+                        border: '#1a1a1a',
+                        accent: '#EDEDED',
+                        muted: '#888888',
+                        brand: '#3B82F6',
+                    },
+                    animation: {
+                        'slide-up': 'slideUp 0.4s ease-out forwards',
+                        'fade-in': 'fadeIn 0.3s ease-out forwards',
+                    },
+                    keyframes: {
+                        slideUp: {
+                            '0%': { opacity: '0', transform: 'translateY(8px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        }
+                    }
+                }
             }
         }
+    </script>
+    
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js" crossorigin="anonymous"></script>
+    <script>
+        Babel.registerPreset('react-classic', {
+            presets: [
+                [Babel.availablePresets['react'], { runtime: 'classic' }]
+            ]
+        });
+    </script>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest" crossorigin="anonymous"></script>
 
-        #result {
-            margin-top: 2rem;
-            padding: 2rem;
-            background: rgba(15, 23, 42, 0.5);
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            display: none;
-            line-height: 1.6;
-        }
-        
-        #result h1, #result h2, #result h3 {
-            margin-top: 1.5rem;
-            margin-bottom: 0.75rem;
-            color: #e2e8f0;
-            background: none;
-            -webkit-text-fill-color: initial;
-        }
-        
-        #result a {
-            color: #60a5fa;
-            text-decoration: none;
-        }
-        
-        #result a:hover {
-            text-decoration: underline;
-        }
-        
-        #result p {
-            margin-bottom: 1rem;
-        }
-        
-        #result ul, #result ol {
-            margin-bottom: 1rem;
-            padding-left: 2rem;
-        }
-        
-        /* Spinner */
-        .spinner {
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            border: 3px solid rgba(255,255,255,.3);
-            border-radius: 50%;
-            border-top-color: #fff;
-            animation: spin 1s ease-in-out infinite;
-            display: none;
-            vertical-align: middle;
-            margin-left: 10px;
+    <style>
+        body {
+            background-color: #000;
+            color: #EDEDED;
+            -webkit-font-smoothing: antialiased;
         }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        .bg-grid {
+            background-image: linear-gradient(to right, #111 1px, transparent 1px),
+                              linear-gradient(to bottom, #111 1px, transparent 1px);
+            background-size: 40px 40px;
+            mask-image: radial-gradient(circle at center, black, transparent 80%);
+            -webkit-mask-image: radial-gradient(circle at center, black, transparent 80%);
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            opacity: 0.5;
+        }
+
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
+
+        /* Report prose styling */
+        .prose { font-family: 'Lora', serif; }
+        .prose p { margin-bottom: 1.25em; line-height: 1.75; color: #A1A1AA; }
+        .prose h1 { font-size: 1.75rem; font-weight: 700; color: #EDEDED; margin-top: 1.5em; margin-bottom: 0.75em; letter-spacing: -0.02em; font-family: 'Inter', sans-serif; }
+        .prose h2 { font-size: 1.375rem; font-weight: 600; color: #EDEDED; margin-top: 2em; margin-bottom: 0.75em; letter-spacing: -0.02em; font-family: 'Inter', sans-serif; }
+        .prose h3 { font-size: 1.125rem; font-weight: 500; color: #D4D4D8; margin-top: 1.5em; margin-bottom: 0.5em; font-family: 'Inter', sans-serif; }
+        .prose a { color: #60A5FA; text-decoration: underline; text-underline-offset: 2px; }
+        .prose a:hover { color: #93C5FD; }
+        .prose ul, .prose ol { margin-bottom: 1.25em; padding-left: 1.5em; color: #A1A1AA; line-height: 1.75; }
+        .prose ul { list-style-type: disc; }
+        .prose ol { list-style-type: decimal; }
+        .prose li { margin-bottom: 0.375em; }
+        .prose code { background: #1a1a2e; color: #93C5FD; padding: 0.15em 0.4em; border-radius: 4px; font-size: 0.875em; }
+        .prose pre { background: #0d0d1a; border: 1px solid #1a1a2e; border-radius: 8px; padding: 1em; overflow-x: auto; margin-bottom: 1.25em; }
+        .prose pre code { background: transparent; padding: 0; color: #D4D4D8; }
+        .prose blockquote { border-left: 3px solid #333; padding-left: 1em; color: #71717A; font-style: italic; margin-bottom: 1.25em; }
+        .prose strong { color: #D4D4D8; }
+        .prose hr { border-color: #222; margin: 2em 0; }
+        .prose table { width: 100%; border-collapse: collapse; margin-bottom: 1.25em; }
+        .prose th, .prose td { border: 1px solid #222; padding: 0.5em 0.75em; text-align: left; color: #A1A1AA; }
+        .prose th { background: #111; color: #D4D4D8; font-family: 'Inter', sans-serif; font-weight: 600; }
+
+        /* Toast notification */
+        .toast {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1a1a1a;
+            border: 1px solid #333;
+            color: #EDEDED;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            z-index: 100;
+            animation: slideUp 0.3s ease-out, fadeOut 0.3s ease-in 1.5s forwards;
+        }
+        @keyframes fadeOut {
+            to { opacity: 0; transform: translateX(-50%) translateY(4px); }
         }
     </style>
 </head>
 <body>
-    <h1>Web Research Agent</h1>
-    
-    <div class="container">
-        <form id="researchForm" class="input-group">
-            <input type="text" id="topic" placeholder="E.g., What are the latest solid state battery breakthroughs?" required>
-            <button type="submit" id="submitBtn">
-                Research <div class="spinner" id="spinner"></div>
-            </button>
-        </form>
+    <div class="bg-grid"></div>
+    <div id="root"></div>
 
-        <div class="log-container" id="logs"></div>
-        
-        <div id="result"></div>
-    </div>
+    <script type="text/babel" data-presets="react-classic">
+        const { useState, useEffect, useRef, useCallback } = React;
 
-    <script>
-        const form = document.getElementById('researchForm');
-        const topicInput = document.getElementById('topic');
-        const submitBtn = document.getElementById('submitBtn');
-        const spinner = document.getElementById('spinner');
-        const logsDiv = document.getElementById('logs');
-        const resultDiv = document.getElementById('result');
-
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const topic = topicInput.value.trim();
-            if (!topic) return;
-
-            // Reset UI
-            logsDiv.innerHTML = '';
-            resultDiv.style.display = 'none';
-            resultDiv.innerHTML = '';
-            submitBtn.disabled = true;
-            spinner.style.display = 'inline-block';
-            
-            const evtSource = new EventSource(`/api/research?topic=${encodeURIComponent(topic)}`);
-            
-            evtSource.onmessage = function(event) {
-                const data = JSON.parse(event.data);
-                
-                if (data.type === 'status') {
-                    addLog(data.message);
-                } else if (data.type === 'tool_call') {
-                    addLog(`Using tool: ${data.name} - ${JSON.stringify(data.args)}`, 'tool');
-                } else if (data.type === 'final_report') {
-                    resultDiv.innerHTML = marked.parse(data.report);
-                    resultDiv.style.display = 'block';
-                    evtSource.close();
-                    resetBtn();
-                } else if (data.type === 'error') {
-                    addLog(`Error: ${data.message}`, 'error');
-                    evtSource.close();
-                    resetBtn();
+        // ─── Icon Component ────────────────────────────────────────
+        const Icon = ({ name, size = 18, className = '' }) => {
+            const iconRef = useRef(null);
+            useEffect(() => {
+                if (iconRef.current && window.lucide) {
+                    try {
+                        iconRef.current.innerHTML = '';
+                        const el = document.createElement('i');
+                        el.setAttribute('data-lucide', name);
+                        iconRef.current.appendChild(el);
+                        window.lucide.createIcons({
+                            root: iconRef.current,
+                            attrs: { width: size, height: size, 'class': className, 'stroke-width': 1.5 }
+                        });
+                    } catch (e) { /* icon not found */ }
                 }
-            };
-            
-            evtSource.onerror = function() {
-                addLog("Connection to server lost.", 'error');
-                evtSource.close();
-                resetBtn();
-            };
-        });
+            }, [name, size, className]);
+            return <span ref={iconRef} className="inline-flex items-center justify-center"></span>;
+        };
 
-        function addLog(msg, type = 'status') {
-            const div = document.createElement('div');
-            div.className = `log-item ${type}`;
-            div.textContent = msg;
-            logsDiv.appendChild(div);
-            // Auto scroll to bottom
-            logsDiv.scrollTop = logsDiv.scrollHeight;
+        // ─── Suggestion Chips ──────────────────────────────────────
+        const SUGGESTIONS = [
+            "Current state of quantum computing in 2026",
+            "Compare React vs Vue vs Svelte for web apps",
+            "How does CRISPR gene editing work?",
+        ];
+
+        // ─── Tech Stack Badges ─────────────────────────────────────
+        const TECH_STACK = [
+            { label: "Python", icon: "terminal" },
+            { label: "FastAPI", icon: "zap" },
+            { label: "Groq", icon: "cpu" },
+            { label: "Gemini", icon: "sparkles" },
+            { label: "React", icon: "code" },
+        ];
+
+        // ─── Toast Component ───────────────────────────────────────
+        const Toast = ({ message, onDone }) => {
+            useEffect(() => {
+                const t = setTimeout(onDone, 2000);
+                return () => clearTimeout(t);
+            }, [onDone]);
+            return <div className="toast">{message}</div>;
+        };
+
+        // ─── Main Chat Interface ───────────────────────────────────
+        const ChatInterface = () => {
+            const [query, setQuery] = useState('');
+            const [submittedQuery, setSubmittedQuery] = useState(null);
+            const [logs, setLogs] = useState([]);
+            const [isDone, setIsDone] = useState(false);
+            const [hasError, setHasError] = useState(false);
+            const [showInfoModal, setShowInfoModal] = useState(false);
+            const [toastMsg, setToastMsg] = useState(null);
+            const [reportHtml, setReportHtml] = useState(null);
+            const [reportRaw, setReportRaw] = useState('');
+            const logsEndRef = useRef(null);
+            const evtSourceRef = useRef(null);
+
+            // Cleanup EventSource on unmount
+            useEffect(() => {
+                return () => { if (evtSourceRef.current) evtSourceRef.current.close(); };
+            }, []);
+
+            const startSearch = useCallback((text) => {
+                if (!text.trim()) return;
+                setSubmittedQuery(text);
+                setQuery('');
+                setLogs([]);
+                setIsDone(false);
+                setHasError(false);
+                setReportHtml(null);
+                setReportRaw('');
+
+                if (evtSourceRef.current) evtSourceRef.current.close();
+
+                const evtSource = new EventSource(`/api/research?topic=${encodeURIComponent(text)}`);
+                evtSourceRef.current = evtSource;
+
+                evtSource.onmessage = function(event) {
+                    try {
+                        const data = JSON.parse(event.data);
+
+                        if (data.type === 'status') {
+                            setLogs(prev => [...prev, { type: 'status', text: data.message }]);
+                        } else if (data.type === 'tool_call') {
+                            const display = data.display || `Using ${data.name}`;
+                            let iconType = 'search';
+                            if (data.name === 'calculator') iconType = 'calc';
+                            if (data.name === 'read_webpage') iconType = 'read';
+                            setLogs(prev => [...prev, { type: iconType, text: display }]);
+                        } else if (data.type === 'final_report') {
+                            setReportHtml(marked.parse(data.report));
+                            setReportRaw(data.report);
+                            setIsDone(true);
+                            evtSource.close();
+                        } else if (data.type === 'error') {
+                            setLogs(prev => [...prev, { type: 'error', text: data.message }]);
+                            // Don't set isDone for non-fatal errors (fallback happening)
+                            if (!data.message.includes('Switching to backup')) {
+                                // Check if it's a final error (no more fallbacks)
+                                if (data.message.includes('No API keys') || data.message.includes('Gemini engine error')) {
+                                    setIsDone(true);
+                                    setHasError(true);
+                                    evtSource.close();
+                                }
+                            }
+                        }
+
+                        setTimeout(() => {
+                            logsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+                        }, 50);
+                    } catch (e) {
+                        console.error('Failed to parse SSE event:', e);
+                    }
+                };
+
+                evtSource.onerror = function() {
+                    if (!isDone) {
+                        setLogs(prev => [...prev, { type: 'error', text: 'Connection to server lost. Please try again.' }]);
+                        setIsDone(true);
+                        setHasError(true);
+                    }
+                    evtSource.close();
+                };
+            }, []);
+
+            const resetChat = useCallback(() => {
+                if (evtSourceRef.current) evtSourceRef.current.close();
+                setSubmittedQuery(null);
+                setQuery('');
+                setLogs([]);
+                setIsDone(false);
+                setHasError(false);
+                setReportHtml(null);
+                setReportRaw('');
+            }, []);
+
+            const copyReport = useCallback(() => {
+                if (reportRaw) {
+                    navigator.clipboard.writeText(reportRaw).then(() => {
+                        setToastMsg('Report copied to clipboard!');
+                    }).catch(() => {
+                        setToastMsg('Failed to copy');
+                    });
+                }
+            }, [reportRaw]);
+
+            const retrySearch = useCallback(() => {
+                if (submittedQuery) startSearch(submittedQuery);
+            }, [submittedQuery, startSearch]);
+
+            // ─── Render ─────────────────────────────────────────────
+            return (
+                <div className="min-h-screen flex flex-col items-center max-w-3xl mx-auto px-4 py-8">
+
+                    {/* ── Header ─────────────────────────────────── */}
+                    <div className="w-full flex items-center justify-between mb-12 animate-slide-up relative z-20">
+                        <div className="flex items-center gap-3 cursor-pointer" onClick={resetChat}>
+                            <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm">
+                                <Icon name="flask-conical" size={15} className="text-black" />
+                            </div>
+                            <span className="font-semibold tracking-tight text-sm text-gray-200">ResearchAgent</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <a href="https://github.com/senthamizhvelan04/AI-powered-research-agent" target="_blank" rel="noopener noreferrer"
+                               className="text-muted hover:text-white transition-colors flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-md hover:bg-white/5">
+                                <Icon name="github" size={14} /> Source
+                            </a>
+                            <button
+                                onClick={() => setShowInfoModal(true)}
+                                className="text-muted hover:text-white transition-colors flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-md hover:bg-white/5"
+                            >
+                                <Icon name="info" size={14} /> Architecture
+                            </button>
+                            {submittedQuery && (
+                                <button
+                                    onClick={resetChat}
+                                    className="text-xs px-3 py-1.5 bg-panel border border-border rounded-lg text-muted hover:text-accent hover:border-gray-600 transition-all ml-1"
+                                >
+                                    New Research
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* ── Architecture Modal ─────────────────────── */}
+                    {showInfoModal && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={() => setShowInfoModal(false)}>
+                            <div className="bg-[#0a0a0a] border border-border p-6 rounded-2xl max-w-lg w-full shadow-2xl relative animate-slide-up" onClick={e => e.stopPropagation()}>
+                                <button onClick={() => setShowInfoModal(false)} className="absolute top-4 right-4 text-muted hover:text-white transition-colors">
+                                    <Icon name="x" size={18} />
+                                </button>
+
+                                <div className="flex items-center gap-3 mb-5">
+                                    <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm">
+                                        <Icon name="cpu" size={20} className="text-black" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-base font-semibold text-white">System Architecture</h3>
+                                        <p className="text-xs text-gray-500">How ResearchAgent works under the hood</p>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4 mb-6">
+                                    <div className="bg-black/40 border border-border rounded-xl p-4">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <Icon name="workflow" size={14} className="text-blue-400" />
+                                            <span className="text-sm font-medium text-gray-200">Agentic Reasoning Loop</span>
+                                        </div>
+                                        <p className="text-xs text-gray-400 leading-relaxed">
+                                            The agent autonomously plans sub-questions, searches the web, reads articles, and synthesizes findings into a cited Markdown report — all without human intervention.
+                                        </p>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div className="bg-black/40 border border-border rounded-xl p-4">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <Icon name="zap" size={14} className="text-yellow-500" />
+                                                <span className="text-sm font-medium text-gray-200">Primary: Groq</span>
+                                            </div>
+                                            <p className="text-xs text-gray-400 leading-relaxed">Llama 3.3 70B via Groq for blazing-fast inference and tool orchestration.</p>
+                                        </div>
+                                        <div className="bg-black/40 border border-border rounded-xl p-4">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <Icon name="shield-check" size={14} className="text-blue-400" />
+                                                <span className="text-sm font-medium text-gray-200">Fallback: Gemini</span>
+                                            </div>
+                                            <p className="text-xs text-gray-400 leading-relaxed">Automatic hot-swap to Gemini 2.0 Flash if Groq is rate-limited.</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-black/40 border border-border rounded-xl p-4">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <Icon name="wrench" size={14} className="text-green-400" />
+                                            <span className="text-sm font-medium text-gray-200">Tool Suite</span>
+                                        </div>
+                                        <div className="flex flex-wrap gap-2 mt-1">
+                                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-gray-400 border border-border">search_web</span>
+                                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-gray-400 border border-border">read_webpage</span>
+                                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-gray-400 border border-border">calculator</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="pt-4 border-t border-border flex items-center justify-between">
+                                    <p className="text-xs text-gray-500">
+                                        Built by <a href="https://github.com/senthamizhvelan04" target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-white transition-colors font-medium">Senthamizh Velan</a>
+                                    </p>
+                                    <div className="flex gap-2">
+                                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-gray-500">Python</span>
+                                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-gray-500">FastAPI</span>
+                                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-gray-500">React</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* ── Main Content ───────────────────────────── */}
+                    <div className="w-full flex-1 flex flex-col gap-8 pb-36">
+
+                        {!submittedQuery ? (
+                            /* ── Landing / Hero ─────────────────── */
+                            <div className="flex flex-col items-center text-center mt-16 animate-slide-up">
+                                <div className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center shadow-lg mb-6">
+                                    <Icon name="flask-conical" size={26} className="text-black" />
+                                </div>
+                                <h1 className="text-3xl font-bold mb-2 tracking-tight">Research anything, instantly.</h1>
+                                <p className="text-muted text-sm mb-8 max-w-md">
+                                    I'll search the web, read articles, verify facts, and write you a cited report — fully autonomous.
+                                </p>
+
+                                {/* Suggestion chips — click to submit directly */}
+                                <div className="flex flex-wrap justify-center gap-2 mb-10">
+                                    {SUGGESTIONS.map((s, i) => (
+                                        <button
+                                            key={i} onClick={() => startSearch(s)}
+                                            className="text-xs px-4 py-2 rounded-full border border-border bg-panel text-muted hover:text-accent hover:border-gray-500 transition-all"
+                                        >
+                                            {s}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                {/* Tech stack badges */}
+                                <div className="flex items-center gap-1.5 text-[10px] text-gray-600">
+                                    <span>Built with</span>
+                                    {TECH_STACK.map((t, i) => (
+                                        <span key={i} className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/[0.03] border border-white/[0.05] text-gray-500">
+                                            <Icon name={t.icon} size={10} /> {t.label}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        ) : (
+                            /* ── Research Session ───────────────── */
+                            <div className="flex flex-col gap-6 w-full animate-slide-up">
+                                {/* User query bubble */}
+                                <div className="flex gap-3">
+                                    <div className="w-7 h-7 rounded-full bg-gray-800 flex items-center justify-center shrink-0 mt-0.5">
+                                        <Icon name="user" size={14} className="text-gray-400" />
+                                    </div>
+                                    <div className="pt-0.5 text-gray-100 text-sm">{submittedQuery}</div>
+                                </div>
+
+                                {/* Agent response area */}
+                                <div className="flex gap-3">
+                                    <div className="w-7 h-7 rounded-full bg-white flex items-center justify-center shrink-0 mt-0.5 shadow-[0_0_12px_rgba(255,255,255,0.08)]">
+                                        <Icon name="flask-conical" size={14} className="text-black" />
+                                    </div>
+                                    <div className="pt-0.5 flex-1 flex flex-col gap-2">
+                                        {/* Loading indicator */}
+                                        {!isDone && (
+                                            <div className="flex items-center gap-2 text-xs text-muted mb-1 font-medium">
+                                                <Icon name="loader-2" size={14} className="animate-spin" /> Researching...
+                                            </div>
+                                        )}
+
+                                        {/* Activity log */}
+                                        <div className="flex flex-col gap-1.5">
+                                            {logs.map((log, i) => (
+                                                <div key={i} className="flex items-start gap-2 text-[13px] text-gray-400 animate-fade-in">
+                                                    <span className="mt-0.5 shrink-0 text-gray-600">
+                                                        {log.type === 'status' ? <Icon name="minus" size={12}/> :
+                                                         log.type === 'search' ? <Icon name="search" size={12}/> :
+                                                         log.type === 'calc' ? <Icon name="calculator" size={12}/> :
+                                                         log.type === 'read' ? <Icon name="book-open" size={12}/> :
+                                                         log.type === 'error' ? <Icon name="alert-triangle" size={12} className="text-red-500"/> :
+                                                         <Icon name="circle" size={12}/>}
+                                                    </span>
+                                                    <span className={
+                                                        log.type === 'status' ? 'text-gray-500' :
+                                                        log.type === 'error' ? 'text-red-400' : ''
+                                                    }>{log.text}</span>
+                                                </div>
+                                            ))}
+                                            <div ref={logsEndRef} />
+                                        </div>
+
+                                        {/* Error state with retry */}
+                                        {isDone && hasError && !reportHtml && (
+                                            <div className="mt-4 bg-red-950/20 border border-red-900/30 rounded-xl p-4 animate-slide-up">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <Icon name="alert-circle" size={16} className="text-red-400" />
+                                                    <span className="text-sm font-medium text-red-300">Research could not be completed</span>
+                                                </div>
+                                                <p className="text-xs text-red-400/70 mb-3">The AI engines encountered errors. This is usually temporary — try again in a moment.</p>
+                                                <div className="flex gap-2">
+                                                    <button onClick={retrySearch} className="text-xs px-3 py-1.5 bg-red-900/30 border border-red-800/40 rounded-lg text-red-300 hover:bg-red-900/50 transition-colors flex items-center gap-1.5">
+                                                        <Icon name="refresh-cw" size={12} /> Retry
+                                                    </button>
+                                                    <button onClick={resetChat} className="text-xs px-3 py-1.5 bg-white/5 border border-border rounded-lg text-gray-400 hover:text-white transition-colors">
+                                                        New Research
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Final Report */}
+                                        {isDone && reportHtml && (
+                                            <div className="mt-4 bg-panel border border-border rounded-xl p-5 md:p-7 animate-slide-up shadow-xl relative group">
+                                                <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <button onClick={copyReport} className="text-muted hover:text-accent p-1.5 rounded-md hover:bg-white/5 transition-all" title="Copy report">
+                                                        <Icon name="copy" size={14}/>
+                                                    </button>
+                                                </div>
+                                                <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: reportHtml }}></div>
+                                            </div>
+                                        )}
+
+                                        {/* Post-report actions */}
+                                        {isDone && reportHtml && (
+                                            <div className="flex gap-2 mt-3 animate-fade-in">
+                                                <button onClick={copyReport} className="text-xs px-3 py-1.5 bg-white/5 border border-border rounded-lg text-muted hover:text-white transition-all flex items-center gap-1.5">
+                                                    <Icon name="copy" size={12} /> Copy Report
+                                                </button>
+                                                <button onClick={resetChat} className="text-xs px-3 py-1.5 bg-white/5 border border-border rounded-lg text-muted hover:text-white transition-all flex items-center gap-1.5">
+                                                    <Icon name="plus" size={12} /> New Research
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* ── Input Bar (fixed bottom) ───────────────── */}
+                    <div className="fixed bottom-0 left-0 w-full bg-gradient-to-t from-black via-black/95 to-transparent pb-6 pt-16 px-4 z-10">
+                        <div className="max-w-2xl mx-auto relative">
+                            <form
+                                onSubmit={(e) => { e.preventDefault(); startSearch(query); }}
+                                className="relative flex items-center bg-[#0a0a0a] border border-border focus-within:border-gray-600 rounded-2xl p-1 shadow-2xl transition-colors duration-300"
+                            >
+                                <input
+                                    type="text"
+                                    value={query}
+                                    onChange={(e) => setQuery(e.target.value)}
+                                    placeholder="Ask a research question..."
+                                    className="flex-1 bg-transparent border-none outline-none px-4 py-3 text-sm text-white placeholder-gray-500"
+                                    autoFocus
+                                />
+                                <button
+                                    type="submit"
+                                    disabled={!query.trim()}
+                                    className="p-2 mr-1 rounded-xl bg-white text-black hover:bg-gray-200 disabled:bg-gray-800 disabled:text-gray-600 transition-colors"
+                                >
+                                    <Icon name="arrow-up" size={16} />
+                                </button>
+                            </form>
+                            <div className="text-center mt-2.5 flex flex-col items-center gap-0.5">
+                                <div className="text-[10px] text-gray-600">
+                                    AI can make mistakes. Verify important information.
+                                </div>
+                                <div className="text-[10px] text-gray-600">
+                                    Designed & developed by{' '}
+                                    <a href="https://github.com/senthamizhvelan04" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-white transition-colors font-medium">
+                                        Senthamizh Velan
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Toast */}
+                    {toastMsg && <Toast message={toastMsg} onDone={() => setToastMsg(null)} />}
+                </div>
+            );
+        };
+
+        // ─── Error Boundary ────────────────────────────────────────
+        class ErrorBoundary extends React.Component {
+            constructor(props) { super(props); this.state = { hasError: false, error: null }; }
+            static getDerivedStateFromError(error) { return { hasError: true, error }; }
+            render() {
+                if (this.state.hasError) {
+                    return <div className="p-8 text-red-400 font-mono text-sm">Application Error: {this.state.error.toString()}</div>;
+                }
+                return this.props.children;
+            }
         }
-        
-        function resetBtn() {
-            submitBtn.disabled = false;
-            spinner.style.display = 'none';
-        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<ErrorBoundary><ChatInterface /></ErrorBoundary>);
     </script>
 </body>
 </html>
