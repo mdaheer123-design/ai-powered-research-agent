@@ -111,6 +111,7 @@ class WebResearchAgent:
             f"3. Once you have enough information, write a detailed Markdown report "
             f"with inline citations [Source](URL).\n"
             f"4. If sources conflict, note the discrepancy explicitly.\n"
+            f"5. If the user just says a simple greeting (like 'hi' or 'hello') or asks a conversational question that doesn't require research, just reply politely and ask what they would like to research today. Do NOT use tools for simple greetings.\n"
         )
 
         # Groq-specific instruction for manual JSON tool calling
