@@ -10,9 +10,10 @@ Powered by **Groq** (Llama 3.3 70B) with automatic fallback to **Gemini** — bo
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Groq](https://img.shields.io/badge/LLM-Groq%20%2F%20Llama%203.3-orange.svg)](https://console.groq.com)
 [![Gemini](https://img.shields.io/badge/Fallback-Gemini%202.0%20Flash-4285F4.svg)](https://aistudio.google.com)
-[![Live Demo](https://img.shields.io/badge/Live-Demo-success.svg?style=flat&logo=render)](https://ai-powered-research-agent-0nm3.onrender.com/)
 
-[Live Demo](https://ai-powered-research-agent-0nm3.onrender.com/) • [Features](#features) • [How It Works](#how-it-works) • [Quick Start](#quick-start) • [Architecture](#architecture)
+**Live Demo:** [https://ai-powered-research-agent-0nm3.onrender.com/](https://ai-powered-research-agent-0nm3.onrender.com/)
+
+[Features](#features) • [How It Works](#how-it-works) • [Quick Start](#quick-start) • [Architecture](#architecture)
 
 </div>
 
