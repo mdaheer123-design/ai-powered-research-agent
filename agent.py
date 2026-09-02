@@ -199,7 +199,35 @@ class WebResearchAgent:
     # ── Groq engine (manual JSON tool calling) ───────────────────────────
     def _run_groq(self, query: str):
         yield {"type": "status", "message": f"Researching: {query}"}
-        yield {"type": "status", "message": "Connected to Groq (Llama 4 Maverick)"}
+        
+        target_model = "llama3-8b-8192"
+        model_display = "Llama 3 8B"
+        try:
+            import requests
+            resp = requests.get(
+                "https://api.groq.com/openai/v1/models",
+                headers={"Authorization": f"Bearer {self.groq_api_key}"},
+                timeout=5
+            )
+            if resp.status_code == 200:
+                available_models = [m.get("id", "") for m in resp.json().get("data", [])]
+                preferences = [
+                    ("llama-3.3-70b-versatile", "Llama 3.3 70B"),
+                    ("llama-3.1-70b-versatile", "Llama 3.1 70B"),
+                    ("llama-3.1-8b-instant", "Llama 3.1 8B"),
+                    ("llama3-70b-8192", "Llama 3 70B"),
+                    ("llama3-8b-8192", "Llama 3 8B"),
+                    ("mixtral-8x7b-32768", "Mixtral 8x7B")
+                ]
+                for mod_id, mod_name in preferences:
+                    if mod_id in available_models:
+                        target_model = mod_id
+                        model_display = mod_name
+                        break
+        except Exception:
+            pass
+
+        yield {"type": "status", "message": f"Connected to Groq ({model_display})"}
 
         client = Groq(api_key=self.groq_api_key)
 
@@ -210,7 +238,7 @@ class WebResearchAgent:
 
         for iteration in range(15):
             response = client.chat.completions.create(
-                model="llama-4-maverick-17b-128e-instruct",
+                model=target_model,
                 messages=messages,
                 temperature=0.3,
             )
