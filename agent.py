@@ -199,7 +199,7 @@ class WebResearchAgent:
     # ── Groq engine (manual JSON tool calling) ───────────────────────────
     def _run_groq(self, query: str):
         yield {"type": "status", "message": f"Researching: {query}"}
-        yield {"type": "status", "message": "Connected to Groq (Llama 3.3 70B)"}
+        yield {"type": "status", "message": "Connected to Groq (Llama 3.1 8B)"}
 
         client = Groq(api_key=self.groq_api_key)
 
@@ -210,7 +210,7 @@ class WebResearchAgent:
 
         for iteration in range(15):
             response = client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
+                model="llama-3.1-8b-instant",
                 messages=messages,
                 temperature=0.3,
             )
@@ -256,7 +256,7 @@ class WebResearchAgent:
     # ── Gemini engine (native function calling) ──────────────────────────
     def _run_gemini(self, query: str):
         yield {"type": "status", "message": f"Researching: {query}"}
-        yield {"type": "status", "message": "Connected to Gemini (2.0 Flash)"}
+        yield {"type": "status", "message": "Connected to Gemini (3.6 Flash)"}
 
         if not self.gemini_api_key:
             yield {"type": "error", "message": "No Gemini API key available."}
@@ -268,7 +268,7 @@ class WebResearchAgent:
             tools=[search_web, read_webpage, calculator],
             temperature=0.3,
         )
-        chat = client.chats.create(model="gemini-2.0-flash", config=config)
+        chat = client.chats.create(model="gemini-3.6-flash", config=config)
 
         try:
             response = chat.send_message(query)
