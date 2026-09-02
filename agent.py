@@ -199,7 +199,7 @@ class WebResearchAgent:
     # ── Groq engine (manual JSON tool calling) ───────────────────────────
     def _run_groq(self, query: str):
         yield {"type": "status", "message": f"Researching: {query}"}
-        yield {"type": "status", "message": "Connected to Groq (Llama 3.1 8B)"}
+        yield {"type": "status", "message": "Connected to Groq (GPT-OSS 120B)"}
 
         client = Groq(api_key=self.groq_api_key)
 
@@ -210,7 +210,7 @@ class WebResearchAgent:
 
         for iteration in range(15):
             response = client.chat.completions.create(
-                model="llama-3.1-8b-instant",
+                model="openai/gpt-oss-120b",
                 messages=messages,
                 temperature=0.3,
             )
