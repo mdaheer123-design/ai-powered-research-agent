@@ -200,8 +200,9 @@ class WebResearchAgent:
     def _run_groq(self, query: str):
         yield {"type": "status", "message": f"Researching: {query}"}
         
-        target_model = "llama3-8b-8192"
-        model_display = "Llama 3 8B"
+        target_model = "openai/gpt-oss-20b"  # Better default
+        model_display = "GPT-OSS 20B"
+        
         try:
             import requests
             resp = requests.get(
@@ -211,13 +212,19 @@ class WebResearchAgent:
             )
             if resp.status_code == 200:
                 available_models = [m.get("id", "") for m in resp.json().get("data", [])]
+                
+                # If our default is decommissioned, use whatever the API gives us first
+                if available_models and target_model not in available_models:
+                    target_model = available_models[0]
+                    model_display = available_models[0]
+                
+                # Try to pick a known good model
                 preferences = [
-                    ("llama-3.3-70b-versatile", "Llama 3.3 70B"),
-                    ("llama-3.1-70b-versatile", "Llama 3.1 70B"),
-                    ("llama-3.1-8b-instant", "Llama 3.1 8B"),
-                    ("llama3-70b-8192", "Llama 3 70B"),
-                    ("llama3-8b-8192", "Llama 3 8B"),
-                    ("mixtral-8x7b-32768", "Mixtral 8x7B")
+                    ("llama-4-maverick-17b-128e-instruct", "Llama 4 Maverick"),
+                    ("openai/gpt-oss-20b", "GPT-OSS 20B"),
+                    ("openai/gpt-oss-120b", "GPT-OSS 120B"),
+                    ("qwen/qwen3.8-27b", "Qwen 3.8 27B"),
+                    ("qwen/qwen3.6-27b", "Qwen 3.6 27B")
                 ]
                 for mod_id, mod_name in preferences:
                     if mod_id in available_models:
